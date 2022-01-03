@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <script type="text/javascript">
+        var webPushTriggerOptInCallback = function () {
+            window.parent.postMessage({ type: 'cleverpush', method: 'triggerOptIn' }, '*');
+        };
+
+        var webPushUnsubscribeCallback = function () {
+            window.parent.postMessage({ type: 'cleverpush', method: 'unsubscribe' }, '*');
+        };
+
+        window.onload = () => {
+            const webpushSubscribeBtn = document.getElementById("webpush-subscribe-btn");
+
+            var showPushOptIn = function () {
+                webpushSubscribeBtn.style.display = 'block';
+            }
+
+            addEventListener("message", (event) => {
+
+                if (event.data.type === "WebPush-Btn-Setup") {
+
+                    let webPushSupported = event.data.arguments[0];
+                    if (webPushSupported) {
+                        window.parent.postMessage({ type: 'cleverpush', method: 'isSubscribed' }, '*');
+                    }
+                    else {
+                        webpushSubscribeBtn.innerHTML = "Web Push nicht unterst&uuml;tzt(disabled)";
+                        showPushOptIn();
+                    }
+                } else if (event.data.type === "cleverpush") {
+
+                    if (event.data.method === "isSubscribed") {
+                        let isSubscribed = event.data.arguments[0];
+                        if (isSubscribed) {
+                            webpushSubscribeBtn.onclick = webPushUnsubscribeCallback;
+                            webpushSubscribeBtn.innerHTML = "Abonniert";
+                        }
+                        else {
+                            webpushSubscribeBtn.onclick = webPushTriggerOptInCallback;
+                            webpushSubscribeBtn.innerHTML = "Nicht abonniert";
+                        }
+                        showPushOptIn();
+                    }
+                }
+
+            })
+        };
+    </script>
+    <button style="display:none" id="webpush-subscribe-btn"></button>
+</body>
+</html>

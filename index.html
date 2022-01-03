@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://static.cleverpush.com/channel/loader/cx7qXXHNmQrZZqgy7.js" async></script>
+</head>
+
+<body>
+    <h1>Cleverpush Webpush</h1>
+    <script type="text/javascript">
+        window.onload = () => {
+            var CleverPush = window.CleverPush || [];
+            var webpushIFrame = document.getElementById("webpush-iframe");
+
+            if (!window.CleverPush || !window.CleverPush.initialized) {
+                window.cleverPushInitCallback = function (err) {
+                    if (err) {
+                        webpushIFrame.contentWindow.postMessage({ type: 'WebPush-Btn-Setup', arguments: [false] });
+                        console.error(err);
+                    } else {
+                        webpushIFrame.contentWindow.postMessage({ type: 'WebPush-Btn-Setup', arguments: [true] });
+                    }
+                };
+            } else {
+                webpushIFrame.contentWindow.postMessage({ type: 'WebPush-Btn-Setup', arguments: [true] });
+            }
+
+            window.addEventListener("message", (event) => {
+                if (event.data.type !== "cleverpush")
+                    return;
+
+                if (!event.data.method ||
+                    !event.data.method) {
+                    console.log(event.data);
+                    return;
+                }
+
+                if (event.data.method === "isSubscribed") {
+                    CleverPush.push(["isSubscribed", function (result) {
+                        webpushIFrame.contentWindow.postMessage({ type: 'cleverpush', method: 'isSubscribed', arguments: [result] });
+                    }]);
+                }
+                else if (event.data.method === "triggerOptIn") {
+                    CleverPush.push(['triggerOptIn', true, function (err, subscriptionId) {
+                        if (err) {
+                            webpushIFrame.contentWindow.postMessage({ type: 'cleverpush', method: 'isSubscribed', arguments: [false] });
+                            alert(err);
+                            console.error(err);
+                        } else {
+                            webpushIFrame.contentWindow.postMessage({ type: 'cleverpush', method: 'isSubscribed', arguments: [true] });
+                            console.log('successfully subscribed with id', subscriptionId);
+                        }
+                    }]);
+                }
+                else if (event.data.method === "unsubscribe") {
+                    CleverPush.push(['unsubscribe']);
+                    webpushIFrame.contentWindow.postMessage({ type: 'cleverpush', method: 'isSubscribed', arguments: [false] });
+                }
+            });
+        }
+    </script>
+
+
+    <iframe id="webpush-iframe" src="iframe.html"></iframe>
+</body>
+</html>
